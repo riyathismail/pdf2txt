@@ -1,0 +1,45 @@
+
+install.packages("pdftools", repos='http://cran.rstudio.com/')
+install.packages("stringr")
+
+# Load necessary packages
+library(pdftools)
+library(stringr)
+
+# Function to extract text from PDF
+extract_text_from_pdf <- function(pdf_file) {
+  text <- pdf_text(pdf_file)
+  return(text)
+}
+
+# Get a list of PDF files in the directory
+pdf_files <- list.files(pattern = "\\.pdf$")
+
+# Process each PDF file
+for (pdf_file in pdf_files) {
+  # Extract text from the PDF
+  pdf_text <- extract_text_from_pdf(pdf_file)
+  
+  # Filter out header, footer, and images based on text length
+  text_length <- nchar(pdf_text)
+  text_filtered <- pdf_text[text_length > 100]  # Adjust the threshold as needed
+  
+  # Combine the remaining text
+  body_text <- paste(text_filtered, collapse = "\n")
+  
+  # Remove numbers using regular expressions
+  body_text <- gsub("\\b\\d+\\b", "", body_text)
+  
+  # Extract only words (remove special characters)
+  clean_text <- str_extract_all(body_text, "\\b\\w+\\b")
+  clean_text <- unlist(clean_text)
+  
+  # Combine the words back into a single string
+  body_text <- paste(clean_text, collapse = " ")
+  
+  # Get the file name without extension
+  file_name <- tools::file_path_sans_ext(pdf_file)
+  
+  # Write the body text to a text file with the same name as the PDF
+  writeLines(body_text, paste0(file_name, ".txt"))
+}
